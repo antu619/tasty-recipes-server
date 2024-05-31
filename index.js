@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
 const port = 5000;
@@ -42,6 +42,26 @@ async function run() {
         const recipes = seaFoodCollection.find();
         const result = await recipes.toArray();
         res.send(result)
+    })
+
+
+    // get a single sea food
+    app.get('/seaFoods/:id', async(req, res) => {
+        const id = req.params.id
+        const recipe = await seaFoodCollection.findOne({_id: new ObjectId(id)});
+        res.send(recipe)
+    })
+
+
+    // update a single sea food
+    app.patch('/seaFoods/:id', async(req, res) => {
+        const id = req.params.id;
+        const updateDoc = req.body
+        const recipe = await seaFoodCollection.updateOne(
+            {_id: new ObjectId(id)},
+            {$set: updateDoc}
+        );
+        res.send(recipe)
     })
     
     console.log("Connected Tasty Recipes DB");

@@ -27,8 +27,23 @@ async function run() {
 
     const recipes = client.db("recipes");
     const seaFoodCollection = recipes.collection("seaFoodCollection");
+    const categoriesCollection = recipes.collection("categoriesCollection");
 
     // Sea Food Recipes
+
+    // get sea foods
+    app.get('/seaFoods', async(req, res) => {
+        const recipes = seaFoodCollection.find();
+        const result = await recipes.toArray();
+        res.send(result)
+    });
+
+    // get sea food categories
+    app.get('/categories', async(req, res) => {
+        const categories = categoriesCollection.find();
+        const result = await categories.toArray();
+        res.send(result)
+    });
 
     // add sea food
     app.post('/seaFoods', async(req, res) => {
@@ -37,32 +52,32 @@ async function run() {
         res.send(result)
     });
 
-    // get sea foods
-    app.get('/seaFoods', async(req, res) => {
-        const recipes = seaFoodCollection.find();
-        const result = await recipes.toArray();
-        res.send(result)
-    })
-
-
     // get a single sea food
     app.get('/seaFoods/:id', async(req, res) => {
         const id = req.params.id
         const recipe = await seaFoodCollection.findOne({_id: new ObjectId(id)});
         res.send(recipe)
-    })
-
+    });
 
     // update a single sea food
     app.patch('/seaFoods/:id', async(req, res) => {
         const id = req.params.id;
-        const updateDoc = req.body
+        const updateDoc = req.body;
         const recipe = await seaFoodCollection.updateOne(
             {_id: new ObjectId(id)},
             {$set: updateDoc}
         );
         res.send(recipe)
-    })
+    });
+
+    // delete a single sea food
+    app.delete('/seaFoods/:id', async(req, res) => {
+        const id = req.params.id;
+        const recipe = await seaFoodCollection.deleteOne(
+            {_id: new ObjectId(id)}
+        );
+        res.send(recipe)
+    });
     
     console.log("Connected Tasty Recipes DB");
   } finally {
@@ -70,8 +85,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
 
 
 app.get('/', (req, res) => {

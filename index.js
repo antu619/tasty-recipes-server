@@ -29,9 +29,18 @@ async function run() {
     const seaFoodCollection = recipes.collection("seaFoodCollection");
 
     // Sea Food Recipes
+
+    // add sea food
     app.post('/seaFoods', async(req, res) => {
         const recipes = req.body;
-        const result = await seaFoodCollection.insertOne(recipes)
+        const result = await seaFoodCollection.insertOne(recipes);
+        res.send(result)
+    });
+
+    // get sea foods
+    app.get('/seaFoods', async(req, res) => {
+        const recipes = seaFoodCollection.find();
+        const result = await recipes.toArray();
         res.send(result)
     })
     

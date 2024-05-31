@@ -24,6 +24,16 @@ async function run() {
   try {
    
     await client.connect();
+
+    const recipes = client.db("recipes");
+    const seaFoodCollection = recipes.collection("seaFoodCollection");
+
+    // Sea Food Recipes
+    app.post('/seaFoods', async(req, res) => {
+        const recipes = req.body;
+        const result = await seaFoodCollection.insertOne(recipes)
+        res.send(result)
+    })
     
     console.log("Connected Tasty Recipes DB");
   } finally {

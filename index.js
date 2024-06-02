@@ -2,11 +2,39 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Json Web Token
+
+function createToken(user) {
+  const token = jwt.sign(
+    {
+      email: user.email,
+    },
+    "secret",
+    { expiresIn: "1h" }
+  );
+  return token;
+}
+
+
+// Verify Token
+
+function verifyToken(req, res, next) {
+  const token = req.headers.authorization.split(" ")[1];
+  console.log(token)
+  const verify = jwt.verify(token, "secret");
+  if (!verify?.email) {
+    return res.send("You are not authorized");
+  }
+  req.user = verify.email;
+  next();
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ngufuqj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -58,7 +86,7 @@ async function run() {
     });
 
     // update a single sea food
-    app.patch("/seaFoods/:id", async (req, res) => {
+    app.patch("/seaFoods/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const updateDoc = req.body;
       const recipe = await seaFoodCollection.updateOne(
@@ -69,7 +97,7 @@ async function run() {
     });
 
     // delete a single sea food
-    app.delete("/seaFoods/:id", async (req, res) => {
+    app.delete("/seaFoods/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const recipe = await seaFoodCollection.deleteOne({
         _id: new ObjectId(id),
@@ -79,14 +107,19 @@ async function run() {
 
     // Handle Users Data
     // Add User
-    app.post("/user", async (req, res) => {
+    app.post("/user", verifyToken, async (req, res) => {
       const user = req.body;
+      const token = createToken(user)
       const isExists = await userCollection.findOne({ email: user.email });
       if (isExists?.email) {
-        return res.send("Logged In");
+        return res.send({
+          status: 200,
+          message: "Login Success",
+          token
+        });
       }
-      const result = await userCollection.insertOne(user);
-      res.send(result);
+      await userCollection.insertOne(user);
+      res.send(token);
     });
 
     // get single user in edit profile
@@ -107,12 +140,15 @@ async function run() {
     app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
       const updateDoc = req.body;
-      const result = await userCollection.updateOne({ email },{
-        $set: updateDoc
-      }, {upsert: true});
+      const result = await userCollection.updateOne(
+        { email },
+        {
+          $set: updateDoc,
+        },
+        { upsert: true }
+      );
       res.send(result);
     });
-    
 
     console.log("Connected Tasty Recipes DB");
   } finally {
